@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: clinicadent-backend
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
