@@ -22,6 +22,7 @@ import pe.edu.upeu.clinica.reportes.dto.ProcedimientoReporteResponse;
 import pe.edu.upeu.clinica.reportes.dto.RecaudacionDiariaResponse;
 import pe.edu.upeu.clinica.reportes.dto.ReporteClinicoResponse;
 import pe.edu.upeu.clinica.shared.exception.ReglaNegocioException;
+import pe.edu.upeu.clinica.tratamientos.plan.entity.EstadoTratamiento;
 import pe.edu.upeu.clinica.tratamientos.plan.entity.Tratamiento;
 import pe.edu.upeu.clinica.tratamientos.plan.repository.TratamientoRepository;
 
@@ -67,7 +68,7 @@ public class ReporteClinicoService {
                 .citasCanceladas(contarCitas(citas, Cita.ESTADO_CANCELADA))
                 .totalAtenciones(atenciones.size())
                 .tratamientosActivos(tratamientos.stream()
-                        .filter(tratamiento -> !Tratamiento.ESTADO_FINALIZADO.equals(tratamiento.getEstado()))
+                        .filter(tratamiento -> !EstadoTratamiento.FINALIZADO.equals(tratamiento.getEstado()))
                         .count())
                 .saldoPendienteActual(saldoPendiente)
                 .cantidadPagos(pagos.size())

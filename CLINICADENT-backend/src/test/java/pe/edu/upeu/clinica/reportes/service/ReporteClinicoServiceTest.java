@@ -23,6 +23,7 @@ import pe.edu.upeu.clinica.pagos.pago.entity.Pago;
 import pe.edu.upeu.clinica.pagos.pago.repository.PagoRepository;
 import pe.edu.upeu.clinica.reportes.dto.ReporteClinicoResponse;
 import pe.edu.upeu.clinica.tratamientos.catalogo.entity.Procedimiento;
+import pe.edu.upeu.clinica.tratamientos.plan.entity.EstadoTratamiento;
 import pe.edu.upeu.clinica.tratamientos.plan.entity.Tratamiento;
 import pe.edu.upeu.clinica.tratamientos.plan.repository.TratamientoRepository;
 
@@ -66,9 +67,9 @@ class ReporteClinicoServiceTest {
                 desde.atStartOfDay(), hasta.plusDays(1).atStartOfDay()))
                 .thenReturn(List.of(Atencion.builder().detalles(List.of(detalleAtencion)).build()));
         when(tratamientoRepository.findAll()).thenReturn(List.of(
-                Tratamiento.builder().estado(Tratamiento.ESTADO_EN_PROCESO)
+                Tratamiento.builder().estado(EstadoTratamiento.EN_PROCESO)
                         .saldoPendiente(new BigDecimal("75.00")).build(),
-                Tratamiento.builder().estado(Tratamiento.ESTADO_FINALIZADO)
+                Tratamiento.builder().estado(EstadoTratamiento.FINALIZADO)
                         .saldoPendiente(BigDecimal.ZERO).build()));
 
         MetodoPago efectivo = MetodoPago.builder().id(1L).nombre("Efectivo").build();

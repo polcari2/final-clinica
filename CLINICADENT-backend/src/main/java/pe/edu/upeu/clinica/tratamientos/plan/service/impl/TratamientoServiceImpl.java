@@ -14,6 +14,7 @@ import pe.edu.upeu.clinica.tratamientos.plan.dto.DetalleTratamientoRequest;
 import pe.edu.upeu.clinica.tratamientos.plan.dto.TratamientoRequest;
 import pe.edu.upeu.clinica.tratamientos.plan.dto.TratamientoResponse;
 import pe.edu.upeu.clinica.tratamientos.plan.entity.DetalleTratamiento;
+import pe.edu.upeu.clinica.tratamientos.plan.entity.EstadoTratamiento;
 import pe.edu.upeu.clinica.tratamientos.plan.entity.Tratamiento;
 import pe.edu.upeu.clinica.tratamientos.plan.mapper.TratamientoMapper;
 import pe.edu.upeu.clinica.tratamientos.plan.repository.TratamientoRepository;
@@ -44,7 +45,7 @@ public class TratamientoServiceImpl implements TratamientoService, TratamientoSa
     @Override
     public TratamientoResponse crear(TratamientoRequest request) {
         Tratamiento tratamiento = tratamientoMapper.toEntity(request);
-        tratamiento.setEstado(Tratamiento.ESTADO_BORRADOR);
+        tratamiento.setEstado(request.getEstado() != null ? request.getEstado() : EstadoTratamiento.BORRADOR);
         tratamiento.setCostoTotal(BigDecimal.ZERO);
         tratamiento.setSaldoPendiente(BigDecimal.ZERO);
         if (request.getDetalles() != null) {
@@ -56,6 +57,10 @@ public class TratamientoServiceImpl implements TratamientoService, TratamientoSa
                 tratamiento.agregarDetalle(construirDetalle(detalle));
             }
         }
+        if (tratamiento.getEstado() == EstadoTratamiento.FINALIZADO
+                && tratamiento.getSaldoPendiente().compareTo(BigDecimal.ZERO) > 0) {
+            throw new ReglaNegocioException("No se puede finalizar un tratamiento con saldo pendiente");
+        }
         Tratamiento guardado = tratamientoRepository.save(tratamiento);
         auditoriaService.registrar("TRATAMIENTO", guardado.getId(), "CREAR", "Plan de tratamiento creado");
         return tratamientoMapper.toResponse(guardado);
@@ -64,7 +69,7 @@ public class TratamientoServiceImpl implements TratamientoService, TratamientoSa
     @Override
     public TratamientoResponse agregarProcedimiento(Long tratamientoId, DetalleTratamientoRequest request) {
         Tratamiento tratamiento = buscar(tratamientoId);
-        if (Tratamiento.ESTADO_FINALIZADO.equals(tratamiento.getEstado())) {
+        if (EstadoTratamiento.FINALIZADO.equals(tratamiento.getEstado())) {
             throw new ReglaNegocioException("No se pueden agregar procedimientos a un tratamiento finalizado");
         }
         if (tratamiento.getDetalles().stream()
@@ -106,36 +111,37 @@ public class TratamientoServiceImpl implements TratamientoService, TratamientoSa
         if (!ESTADOS_VALIDOS.contains(estadoNormalizado)) {
             throw new ReglaNegocioException("Estado de tratamiento invalido: " + estado);
         }
+        EstadoTratamiento nuevoEstado = EstadoTratamiento.valueOf(estadoNormalizado);
         Tratamiento tratamiento = buscar(id);
-        String estadoAnterior = tratamiento.getEstado();
-        validarTransicion(tratamiento, estadoNormalizado);
-        tratamiento.setEstado(estadoNormalizado);
+        EstadoTratamiento estadoAnterior = tratamiento.getEstado();
+        validarTransicion(tratamiento, nuevoEstado);
+        tratamiento.setEstado(nuevoEstado);
         Tratamiento actualizado = tratamientoRepository.save(tratamiento);
-        if (!estadoAnterior.equals(estadoNormalizado)) {
+        if (estadoAnterior != nuevoEstado) {
             auditoriaService.registrar(
                     "TRATAMIENTO",
                     id,
                     "CAMBIAR_ESTADO",
-                    "Estado actualizado: " + estadoAnterior + " -> " + estadoNormalizado);
+                    "Estado actualizado: " + estadoAnterior + " -> " + nuevoEstado);
         }
         return tratamientoMapper.toResponse(actualizado);
     }
 
-    private void validarTransicion(Tratamiento tratamiento, String nuevoEstado) {
-        String estadoActual = tratamiento.getEstado();
-        if (estadoActual.equals(nuevoEstado)) {
+    private void validarTransicion(Tratamiento tratamiento, EstadoTratamiento nuevoEstado) {
+        EstadoTratamiento estadoActual = tratamiento.getEstado();
+        if (estadoActual == nuevoEstado) {
             return;
         }
         boolean transicionValida = switch (estadoActual) {
-            case Tratamiento.ESTADO_BORRADOR -> Tratamiento.ESTADO_APROBADO.equals(nuevoEstado);
-            case Tratamiento.ESTADO_APROBADO -> Tratamiento.ESTADO_EN_PROCESO.equals(nuevoEstado);
-            case Tratamiento.ESTADO_EN_PROCESO -> Tratamiento.ESTADO_FINALIZADO.equals(nuevoEstado);
+            case BORRADOR -> nuevoEstado == EstadoTratamiento.APROBADO;
+            case APROBADO -> nuevoEstado == EstadoTratamiento.EN_PROCESO;
+            case EN_PROCESO -> nuevoEstado == EstadoTratamiento.FINALIZADO;
             default -> false;
         };
         if (!transicionValida) {
             throw new ReglaNegocioException("Transicion no permitida: " + estadoActual + " -> " + nuevoEstado);
         }
-        if (Tratamiento.ESTADO_FINALIZADO.equals(nuevoEstado)
+        if (nuevoEstado == EstadoTratamiento.FINALIZADO
                 && tratamiento.getSaldoPendiente().compareTo(BigDecimal.ZERO) > 0) {
             throw new ReglaNegocioException("No se puede finalizar un tratamiento con saldo pendiente");
         }
@@ -154,9 +160,9 @@ public class TratamientoServiceImpl implements TratamientoService, TratamientoSa
             throw new MontoExcedidoException("El abono excede el saldo pendiente del tratamiento");
         }
         tratamiento.setSaldoPendiente(tratamiento.getSaldoPendiente().subtract(montoAbono));
-        if (Tratamiento.ESTADO_BORRADOR.equals(tratamiento.getEstado())
-                || Tratamiento.ESTADO_APROBADO.equals(tratamiento.getEstado())) {
-            tratamiento.setEstado(Tratamiento.ESTADO_EN_PROCESO);
+        if (EstadoTratamiento.BORRADOR.equals(tratamiento.getEstado())
+                || EstadoTratamiento.APROBADO.equals(tratamiento.getEstado())) {
+            tratamiento.setEstado(EstadoTratamiento.EN_PROCESO);
         }
         tratamientoRepository.save(tratamiento);
     }

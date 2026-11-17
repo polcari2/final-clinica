@@ -34,6 +34,7 @@ export class TratamientoList implements OnInit {
 
   protected readonly form = this.formBuilder.nonNullable.group({
     idPaciente: ['', Validators.required],
+    estado: ['BORRADOR', Validators.required],
     idProcedimiento: ['', Validators.required],
     cantidad: [1, [Validators.required, Validators.min(1)]],
   });
@@ -185,6 +186,7 @@ export class TratamientoList implements OnInit {
 
     const request = {
       idPaciente: Number(this.form.controls.idPaciente.value),
+      estado: this.form.controls.estado.value,
       detalles: this.detalles().map(({ idProcedimiento, cantidad }) => ({
         idProcedimiento,
         cantidad,
@@ -196,7 +198,7 @@ export class TratamientoList implements OnInit {
       next: (tratamiento) => {
         this.tratamientos.update((current) => [tratamiento, ...current]);
         this.detalles.set([]);
-        this.form.reset({ idPaciente: '', idProcedimiento: '', cantidad: 1 });
+        this.form.reset({ idPaciente: '', estado: 'BORRADOR', idProcedimiento: '', cantidad: 1 });
         this.success.set(`Se creó correctamente el plan #${tratamiento.id}.`);
         this.saving.set(false);
       },

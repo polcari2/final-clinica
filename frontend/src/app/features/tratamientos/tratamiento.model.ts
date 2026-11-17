@@ -28,6 +28,7 @@ export interface DetalleTratamiento {
 
 export interface TratamientoRequest {
   idPaciente: number;
+  estado?: string;
   detalles: DetalleTratamientoRequest[];
 }
 

@@ -3,6 +3,8 @@ package pe.edu.upeu.clinica.tratamientos.plan.entity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -45,8 +47,9 @@ public class Tratamiento {
     @Column(name = "FECHA_CREACION", nullable = false)
     private LocalDateTime fechaCreacion;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "ESTADO", nullable = false, length = 20)
-    private String estado;
+    private EstadoTratamiento estado;
 
     @Column(name = "COSTO_TOTAL", nullable = false, precision = 10, scale = 2)
     private BigDecimal costoTotal;
@@ -64,7 +67,7 @@ public class Tratamiento {
             fechaCreacion = LocalDateTime.now();
         }
         if (estado == null) {
-            estado = ESTADO_BORRADOR;
+            estado = EstadoTratamiento.BORRADOR;
         }
         if (costoTotal == null) {
             costoTotal = BigDecimal.ZERO;

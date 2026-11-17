@@ -15,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import pe.edu.upeu.clinica.auditoria.AuditoriaService;
 import pe.edu.upeu.clinica.shared.exception.ReglaNegocioException;
 import pe.edu.upeu.clinica.tratamientos.catalogo.repository.ProcedimientoRepository;
+import pe.edu.upeu.clinica.tratamientos.plan.entity.EstadoTratamiento;
 import pe.edu.upeu.clinica.tratamientos.plan.entity.Tratamiento;
 import pe.edu.upeu.clinica.tratamientos.plan.mapper.TratamientoMapper;
 import pe.edu.upeu.clinica.tratamientos.plan.repository.TratamientoRepository;
@@ -41,7 +42,7 @@ class TratamientoServiceImplTest {
     void noPermiteFinalizarTratamientoConSaldoPendiente() {
         Tratamiento tratamiento = Tratamiento.builder()
                 .id(4L)
-                .estado(Tratamiento.ESTADO_EN_PROCESO)
+                .estado(EstadoTratamiento.EN_PROCESO)
                 .saldoPendiente(new BigDecimal("25.00"))
                 .build();
         when(tratamientoRepository.findById(4L)).thenReturn(Optional.of(tratamiento));
@@ -56,7 +57,7 @@ class TratamientoServiceImplTest {
     void noPermiteSaltarEstadosDelTratamiento() {
         Tratamiento tratamiento = Tratamiento.builder()
                 .id(4L)
-                .estado(Tratamiento.ESTADO_BORRADOR)
+                .estado(EstadoTratamiento.BORRADOR)
                 .saldoPendiente(BigDecimal.ZERO)
                 .build();
         when(tratamientoRepository.findById(4L)).thenReturn(Optional.of(tratamiento));

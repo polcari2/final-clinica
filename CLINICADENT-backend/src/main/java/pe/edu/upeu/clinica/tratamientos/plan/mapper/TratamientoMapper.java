@@ -14,7 +14,6 @@ public interface TratamientoMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "fechaCreacion", ignore = true)
-    @Mapping(target = "estado", ignore = true)
     @Mapping(target = "costoTotal", ignore = true)
     @Mapping(target = "saldoPendiente", ignore = true)
     @Mapping(target = "detalles", ignore = true)
